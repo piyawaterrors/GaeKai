@@ -1,0 +1,5 @@
+* text=auto
+# cmd.exe อ่านไฟล์ .bat ที่ขึ้นบรรทัดแบบ LF ผิดพลาดได้
+*.bat text eol=crlf
+*.ico binary
+*.png binary

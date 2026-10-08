@@ -1,0 +1,52 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set version from tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "Tag must look like v1.2.3 (got ${{ github.ref_name }})" }
+          foreach ($file in 'src/Program.cs', 'installer/Setup.cs') {
+            (Get-Content $file -Raw) -replace '"\d+\.\d+\.\d+\.\d+"', "`"$version.0`"" | Set-Content $file -NoNewline
+            Select-String -Path $file -Pattern 'Assembly(File)?Version'
+          }
+
+      - name: Test
+        shell: cmd
+        run: build.bat test
+
+      - name: Build
+        shell: cmd
+        run: build.bat
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GaeKai
+          path: |
+            dist/GaeKai-Setup.exe
+            dist/GaeKai.exe
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/GaeKai-Setup.exe
+            dist/GaeKai.exe
+          generate_release_notes: true
