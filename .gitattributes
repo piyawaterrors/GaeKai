@@ -3,3 +3,6 @@
 *.bat text eol=crlf
 *.ico binary
 *.png binary
+# สคริปต์ build ของ macOS ต้องขึ้นบรรทัดแบบ LF
+*.sh text eol=lf
+*.icns binary

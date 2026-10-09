@@ -2,6 +2,8 @@
 
 ลืมกดเปลี่ยนภาษาก่อนพิมพ์? แค่ **คลุมข้อความ** แล้วกด **`Ctrl + Shift + Space`** ข้อความจะถูกแก้เป็นภาษาที่ตั้งใจพิมพ์ทันที
 
+ใช้ได้ทั้ง **Windows** และ **macOS** (ดู [ส่วนของ macOS](#macos))
+
 | พิมพ์ผิดเป็น | กดคีย์ลัดแล้วได้ |
 |---|---|
 | `l;ylfu;yoouh;yo0yomiN` | สวัสดีวันนี้วันจันทร์ |
@@ -106,6 +108,56 @@ Paused=false
 
 ---
 
+## macOS
+
+ใช้ได้กับ macOS 13 (Ventura) ขึ้นไป ทั้งเครื่อง Apple Silicon (M1 ขึ้นไป) และ Intel
+
+### ติดตั้ง
+
+1. ดาวน์โหลด **`GaeKai-mac.dmg`** จากหน้า [Releases](../../releases/latest)
+2. เปิดไฟล์ แล้วลาก **GaeKai** ไปใส่โฟลเดอร์ **Applications**
+3. เปิด GaeKai จาก Applications ครั้งแรก macOS จะไม่ยอมเปิด เพราะโปรแกรมยังไม่ได้ลงทะเบียนกับ Apple
+   ให้ไปที่ **System Settings → Privacy & Security** เลื่อนลงไปแล้วกด **Open Anyway**
+4. **อนุญาตสิทธิ์ Accessibility:** โปรแกรมจะพาไปที่ **System Settings → Privacy & Security → Accessibility**
+   ให้เปิดสวิตช์ที่ **GaeKai** (ต้องมีสิทธิ์นี้ GaeKai จึงจะกด ⌘C / ⌘V แทนคุณได้)
+
+เมื่อเปิดแล้ว จะมีไอคอน **ก** ขึ้นที่แถบเมนูด้านบนของจอ ถ้าไอคอนเป็นสีจาง แปลว่ายังไม่ได้รับสิทธิ์ หรือหยุดชั่วคราวอยู่
+
+### วิธีใช้
+
+เหมือนบน Windows: คลุมข้อความที่พิมพ์ผิดภาษา แล้วกด **`⌃⇧Space`** (Control + Shift + Space)
+เปลี่ยนคีย์ลัดได้ที่เมนู **ตั้งค่า / เปลี่ยนคีย์ลัด...** หรือเปิด GaeKai จาก Applications ซ้ำอีกครั้ง
+
+การตั้งค่าเก็บไว้ที่ `~/Library/Application Support/GaeKai/settings.ini` ในรูปแบบเดียวกับ Windows
+ส่วนชื่อปุ่มกดร่วมใช้ `Ctrl`, `Option`, `Shift`, `Cmd` เช่น `Hotkey=Ctrl + Option + K`
+
+### ต่างจาก Windows อย่างไร
+
+- **ใช้แป้นพิมพ์ที่คุณเปิดไว้จริง** โปรแกรมอ่านตำแหน่งปุ่มจากแป้นไทยและแป้นอังกฤษใน
+  **System Settings → Keyboard → Input Sources** จึงรองรับทั้ง **เกษมณีและปัตตะโชติ** (และแป้นอังกฤษแบบ Dvorak ฯลฯ)
+  ถ้ายังไม่ได้เพิ่มแป้นไทยไว้ จะใช้แป้นเกษมณีเป็นค่าเริ่มต้น
+- แป้นเกษมณีของ macOS ต่างจากของ Windows 2 ปุ่ม: ปุ่ม `` ` `` ได้ `-` และปุ่ม `3` ได้ `_` (Windows สลับกัน) GaeKai แปลงตามแป้นของ macOS
+- เปิดอัตโนมัติเมื่อเปิดเครื่องผ่าน **Login Items** (ดูได้ที่ System Settings → General → Login Items)
+- คลิปบอร์ดที่คืนค่าจะถูกติดป้ายไว้ไม่ให้โปรแกรมจัดการคลิปบอร์ด (Maccy, Raycast, Alfred, Paste ฯลฯ) บันทึกซ้ำ
+
+### ข้อจำกัดบน macOS
+
+- **อัปเดตเป็นเวอร์ชันใหม่แล้ว คีย์ลัดไม่ทำงาน?** เพราะ macOS จำสิทธิ์ Accessibility ไว้กับตัวโปรแกรมแต่ละเวอร์ชัน
+  ให้ไปที่ Privacy & Security → Accessibility เลือก GaeKai แล้วกดปุ่ม **−** เพื่อลบออก จากนั้นเปิด GaeKai แล้วอนุญาตใหม่
+- ใช้กับช่องรหัสผ่านไม่ได้ (macOS ไม่อนุญาตให้โปรแกรมอื่นส่งปุ่มเข้าไป)
+- ใน Terminal ใช้ได้ (Terminal ใช้ ⌘C / ⌘V) แต่ข้อความที่วางจะต่อท้ายบรรทัดคำสั่ง ไม่ได้แทนที่ข้อความเดิม
+- คีย์ลัดที่ตั้งไว้จะใช้แทนคีย์ลัดเดียวกันของโปรแกรมอื่น ถ้าชนกับคีย์ลัดของ macOS เอง (เช่น ⌃Space ที่ใช้สลับภาษา) ให้เลือกคีย์ลัดอื่น
+- ใน VS Code ตรวจจับการคัดลอกทั้งบรรทัดให้แล้ว แต่ใน JetBrains ต้องคลุมข้อความก่อนกดคีย์ลัดเสมอ
+
+### ถอนการติดตั้ง
+
+1. คลิกที่ไอคอน **ก** แล้วเลือก **ออกจากโปรแกรม**
+2. ลาก **GaeKai** จาก Applications ไปที่ถังขยะ
+3. ลบโฟลเดอร์ `~/Library/Application Support/GaeKai`
+4. ลบ GaeKai ออกจาก System Settings → Privacy & Security → Accessibility (ถ้าต้องการ)
+
+---
+
 ## สำหรับนักพัฒนา
 
 ### Build
@@ -121,6 +173,19 @@ build.bat icon     :: สร้าง src\GaeKai.ico ใหม่
 เนื่องจาก compiler ที่มากับ Windows รองรับถึง C# 5 โค้ดทั้งหมดจึงเขียนด้วย C# 5
 (ห้ามใช้ `$"..."`, `?.`, `nameof`, `=>` แบบ expression-bodied member เป็นต้น)
 
+### Build บน macOS
+
+ต้องมี Xcode หรือ Command Line Tools (`xcode-select --install`) โค้ดอยู่ในโฟลเดอร์ `mac/` เขียนด้วย Swift + AppKit
+
+```bash
+mac/build.sh          # สร้าง dist/GaeKai.app และ dist/GaeKai-mac.dmg (Universal: Apple Silicon + Intel)
+mac/build.sh test     # รันชุดทดสอบ
+mac/build.sh icon     # สร้าง mac/Resources/GaeKai.icns ใหม่
+```
+
+ตัวโปรแกรมเซ็นแบบ ad-hoc เท่านั้น (ไม่ใช่ Developer ID) ทุกครั้งที่ build ใหม่ macOS จะมองเป็นโปรแกรมคนละตัว
+ต้องลบ GaeKai ออกจากรายการ Accessibility แล้วอนุญาตใหม่
+
 ### หลักการทำงาน
 
 1. ลงทะเบียนคีย์ลัดกับ Windows ด้วย `RegisterHotKey`
@@ -131,6 +196,10 @@ build.bat icon     :: สร้าง src\GaeKai.ico ใหม่
 6. ใส่ข้อความใหม่ลงคลิปบอร์ด แล้วจำลองการกด Ctrl + V
 7. สลับภาษาแป้นพิมพ์ของหน้าต่างนั้นด้วย `WM_INPUTLANGCHANGEREQUEST`
 8. รอ 400 ms ให้โปรแกรมปลายทางวางเสร็จ แล้วคืนค่าคลิปบอร์ดเดิม
+
+บน macOS ขั้นตอนเหมือนกัน แต่ใช้ `RegisterEventHotKey` รับคีย์ลัด, `CGEvent` จำลองการกด ⌘C / ⌘V,
+`NSPasteboard.changeCount` ดูว่าคลิปบอร์ดเปลี่ยนไหม, `UCKeyTranslate` อ่านตำแหน่งปุ่มจากแป้นที่ผู้ใช้เปิดไว้
+และ `TISSelectInputSource` สลับภาษาแป้นพิมพ์
 
 ### โครงสร้างโปรเจกต์
 
@@ -148,6 +217,12 @@ build.bat icon     :: สร้าง src\GaeKai.ico ใหม่
 | `installer/` | ตัวติดตั้ง `GaeKai-Setup.exe` (ฝัง `GaeKai.exe` ไว้ข้างใน) |
 | `tests/Tests.cs` | ชุดทดสอบ |
 | `tools/IconGen.cs` | สร้างไฟล์ไอคอน |
+| `mac/Sources/LayoutConverter.swift`, `mac/Sources/KeyboardLayouts.swift` | (macOS) ตารางแป้นพิมพ์ การอ่านแป้นที่ผู้ใช้เปิดไว้ และการสลับภาษา |
+| `mac/Sources/TextSwapper.swift`, `mac/Sources/Clipboard.swift` | (macOS) ขั้นตอนคัดลอก → แปลง → วาง และการสำรอง/คืนค่าคลิปบอร์ด |
+| `mac/Sources/Hotkey.swift`, `mac/Sources/HotkeyCenter.swift`, `mac/Sources/HotkeyField.swift` | (macOS) รูปแบบคีย์ลัด การลงทะเบียนคีย์ลัด และช่องสำหรับกดคีย์ลัด |
+| `mac/Sources/App.swift`, `mac/Sources/SettingsWindow.swift` | (macOS) ไอคอนที่แถบเมนู เมนู และหน้าตั้งค่า |
+| `mac/Sources/AppSettings.swift`, `mac/Sources/LoginItem.swift`, `mac/Sources/Permissions.swift` | (macOS) ไฟล์ตั้งค่า การเปิดพร้อมเครื่อง และสิทธิ์ Accessibility |
+| `mac/tests/Tests.swift`, `mac/tools/IconGen.swift` | (macOS) ชุดทดสอบ และสร้างไฟล์ไอคอน |
 
 ### ออกเวอร์ชันใหม่
 
@@ -157,7 +232,7 @@ git push origin v1.0.0
 ```
 
 GitHub Actions จะรันชุดทดสอบ, build, ใส่เลขเวอร์ชันตาม tag ให้ตัวโปรแกรมและตัวติดตั้ง
-แล้วแนบ `GaeKai-Setup.exe` และ `GaeKai.exe` ไว้ในหน้า Releases ให้อัตโนมัติ
+แล้วแนบ `GaeKai-Setup.exe`, `GaeKai.exe` และ `GaeKai-mac.dmg` ไว้ในหน้า Releases ให้อัตโนมัติ
 
 ## License
 
@@ -172,3 +247,6 @@ Select the text, press **Ctrl + Shift + Space**, and `l;ylfu` becomes `สวั
 The direction is detected automatically, the keyboard layout is switched for you, and your clipboard is restored afterwards.
 The hotkey is configurable, and the app starts with Windows. It's a single ~150 KB exe with no dependencies beyond the .NET Framework 4.8 built into Windows 10/11.
 Download `GaeKai-Setup.exe` (per-user installer, no admin rights needed) or the portable `GaeKai.exe` from [Releases](../../releases/latest), or build both with `build.bat`.
+
+**macOS (13+):** a native menu bar app lives in `mac/`. Download `GaeKai-mac.dmg`, drag GaeKai to Applications, and grant it Accessibility access (needed to send ⌘C / ⌘V).
+It reads the Thai and English layouts you have enabled, so both Kedmanee and Pattachote work. Build with `mac/build.sh` (needs the Xcode Command Line Tools).
