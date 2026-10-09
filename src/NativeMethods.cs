@@ -91,6 +91,30 @@ namespace GaeKai
         [DllImport("user32.dll")]
         internal static extern IntPtr GetForegroundWindow();
 
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct RECT
+        {
+            public int Left, Top, Right, Bottom;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct GUITHREADINFO
+        {
+            public int cbSize;
+            public uint flags;
+            public IntPtr hwndActive;
+            public IntPtr hwndFocus;
+            public IntPtr hwndCapture;
+            public IntPtr hwndMenuOwner;
+            public IntPtr hwndMoveSize;
+            public IntPtr hwndCaret;
+            public RECT rcCaret;
+        }
+
+        /// <summary>idThread = 0 คือ thread ของหน้าต่างที่ผู้ใช้กำลังใช้งาน</summary>
+        [DllImport("user32.dll", SetLastError = true)]
+        internal static extern bool GetGUIThreadInfo(uint idThread, ref GUITHREADINFO lpgui);
+
         [DllImport("user32.dll")]
         internal static extern int GetKeyboardLayoutList(int nBuff, [Out] IntPtr[] lpList);
 

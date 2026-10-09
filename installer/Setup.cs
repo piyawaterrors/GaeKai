@@ -11,8 +11,8 @@ using Microsoft.Win32;
 [assembly: AssemblyDescription("Installer for GaeKai")]
 [assembly: AssemblyProduct("GaeKai")]
 [assembly: AssemblyCopyright("MIT License")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.0.1.0")]
+[assembly: AssemblyFileVersion("1.0.1.0")]
 [assembly: ComVisible(false)]
 
 namespace GaeKai.Setup
@@ -23,6 +23,19 @@ namespace GaeKai.Setup
         public bool DesktopShortcut;
         public bool StartWithWindows = true;
         public bool LaunchAfterInstall = true;
+
+        /// <summary>ค่าเริ่มต้นของตัวเลือก: ถ้าเป็นการอัปเดต ให้คงตัวเลือกเดิมที่ผู้ใช้เลือกไว้</summary>
+        public static InstallOptions ForThisComputer()
+        {
+            InstallOptions options = new InstallOptions();
+            if (InstallLayout.IsInstalled)
+            {
+                options.StartMenuShortcut = File.Exists(InstallLayout.StartMenuShortcutPath);
+                options.DesktopShortcut = File.Exists(InstallLayout.DesktopShortcutPath);
+                options.StartWithWindows = InstallLayout.IsAutostartEnabled;
+            }
+            return options;
+        }
     }
 
     internal static class SetupProgram
@@ -51,7 +64,7 @@ namespace GaeKai.Setup
             });
             if (silent)
             {
-                InstallOptions options = new InstallOptions();
+                InstallOptions options = InstallOptions.ForThisComputer();
                 options.LaunchAfterInstall = false;
                 try
                 {

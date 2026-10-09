@@ -8,7 +8,8 @@ enum TextSwapper {
     private static let copyTimeout: TimeInterval = 0.7
     private static let pasteSettleNanoseconds: UInt64 = 400_000_000
 
-    static func convertSelection(settings: AppSettings) async -> ConversionDirection {
+    /// คืนค่า true ถ้าแปลงและวางทับแล้ว
+    static func convertSelection(settings: AppSettings) async -> Bool {
         // รอให้ผู้ใช้ปล่อยปุ่มคีย์ลัดก่อน ไม่อย่างนั้นโปรแกรมปลายทางอาจเห็นเป็น Cmd+Shift+C
         await waitForKeysReleased(settings.hotkey)
 
@@ -18,25 +19,30 @@ enum TextSwapper {
         postShortcut(kVK_ANSI_C)
 
         guard let selected = await waitForCopiedText(since: changeCount) else {
-            return .none // ไม่มีข้อความที่คลุมไว้ คลิปบอร์ดไม่ถูกแตะ
+            return false // ไม่มีข้อความที่คลุมไว้ คลิปบอร์ดไม่ถูกแตะ
         }
 
         if Clipboard.isWholeLineCopy() {
             Clipboard.restore(backup)
-            return .none
+            return false
         }
 
-        let (converted, direction) = KeyboardLayouts.converterForEnabledLayouts().convert(selected)
-        if direction == .none || converted == selected {
+        let converted = KeyboardLayouts.converterForEnabledLayouts().fix(selected)
+        if converted == selected {
             Clipboard.restore(backup)
-            return .none
+            return false
         }
 
-        guard Clipboard.setText(converted) else { return .none }
+        guard Clipboard.setText(converted) else { return false }
         postShortcut(kVK_ANSI_V)
 
         if settings.switchKeyboardLayout {
-            KeyboardLayouts.select(direction == .englishToThai ? .thai : .english)
+            // เคอร์เซอร์อยู่ท้ายข้อความที่วาง จึงสลับเป็นภาษาของคำท้ายสุด ให้พิมพ์ต่อได้ทันที
+            switch LayoutConverter.languageAtEnd(converted) {
+            case .thai: KeyboardLayouts.select(.thai)
+            case .english: KeyboardLayouts.select(.english)
+            case .none: break
+            }
         }
 
         if settings.restoreClipboard {
@@ -44,7 +50,7 @@ enum TextSwapper {
             try? await Task.sleep(nanoseconds: pasteSettleNanoseconds)
             Clipboard.restore(backup)
         }
-        return direction
+        return true
     }
 
     private static func waitForKeysReleased(_ hotkey: Hotkey) async {

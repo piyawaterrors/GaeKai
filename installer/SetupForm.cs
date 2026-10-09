@@ -91,13 +91,11 @@ namespace GaeKai.Setup
             root.Controls.Add(folderBox);
 
             // ---- ตัวเลือก ----
-            AddOption(root, startMenuBox, "สร้างทางลัดใน Start Menu",
-                upgrade ? File.Exists(InstallLayout.StartMenuShortcutPath) : true);
-            AddOption(root, desktopBox, "สร้างทางลัดบนหน้าจอ (Desktop)",
-                upgrade && File.Exists(InstallLayout.DesktopShortcutPath));
-            AddOption(root, startupBox, "เปิดโปรแกรมอัตโนมัติเมื่อเปิดเครื่อง",
-                upgrade ? InstallLayout.IsAutostartEnabled : true);
-            AddOption(root, launchBox, "เปิดโปรแกรมทันทีหลังติดตั้งเสร็จ", true);
+            InstallOptions defaults = InstallOptions.ForThisComputer();
+            AddOption(root, startMenuBox, "สร้างทางลัดใน Start Menu", defaults.StartMenuShortcut);
+            AddOption(root, desktopBox, "สร้างทางลัดบนหน้าจอ (Desktop)", defaults.DesktopShortcut);
+            AddOption(root, startupBox, "เปิดโปรแกรมอัตโนมัติเมื่อเปิดเครื่อง", defaults.StartWithWindows);
+            AddOption(root, launchBox, "เปิดโปรแกรมทันทีหลังติดตั้งเสร็จ", defaults.LaunchAfterInstall);
 
             // ---- ปุ่ม ----
             TableLayoutPanel footer = new TableLayoutPanel();

@@ -7,12 +7,12 @@
 #    mac/build.sh test     build and run the unit tests
 #    mac/build.sh icon     regenerate mac/Resources/GaeKai.icns
 #
-#  Set GAEKAI_VERSION=1.2.3 to stamp a version into the app (default 1.0.0).
+#  Set GAEKAI_VERSION=1.2.3 to stamp a version into the app (default 1.0.1).
 # ---------------------------------------------------------------------------
 set -euo pipefail
 cd "$(dirname "$0")"
 
-VERSION="${GAEKAI_VERSION:-1.0.0}"
+VERSION="${GAEKAI_VERSION:-1.0.1}"
 DIST=../dist
 BUILD=../dist/mac-build
 MIN_MACOS=13.0

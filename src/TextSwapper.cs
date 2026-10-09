@@ -15,7 +15,8 @@ namespace GaeKai
         private const int CopyTimeoutMs = 700;
         private const int PasteSettleMs = 400;
 
-        public static async Task<ConversionDirection> ConvertSelectionAsync(AppSettings settings, IntPtr owner)
+        /// <returns>true ถ้าแปลงและวางทับแล้ว</returns>
+        public static async Task<bool> ConvertSelectionAsync(AppSettings settings, IntPtr owner)
         {
             // ต้องรอให้ผู้ใช้ปล่อยปุ่มคีย์ลัดก่อน ไม่อย่างนั้น Ctrl+C จะกลายเป็น Ctrl+Shift+C
             await WaitForKeysReleasedAsync(settings.Hotkey);
@@ -26,29 +27,36 @@ namespace GaeKai
             SendShortcut(Keys.C);
 
             string selected = await WaitForCopiedTextAsync(sequence, owner);
-            if (selected == null) return ConversionDirection.None; // ไม่มีข้อความที่คลุมไว้ คลิปบอร์ดไม่ถูกแตะ
+            if (selected == null) return false; // ไม่มีข้อความที่คลุมไว้ คลิปบอร์ดไม่ถูกแตะ
 
             if (ClipboardHelper.IsWholeLineCopy(owner))
             {
                 ClipboardHelper.Restore(owner, backup);
-                return ConversionDirection.None;
+                return false;
             }
 
-            ConversionDirection direction;
-            string converted = LayoutConverter.Convert(selected, out direction);
-            if (direction == ConversionDirection.None || converted == selected)
+            string converted = LayoutConverter.Fix(selected);
+            if (converted == selected)
             {
                 ClipboardHelper.Restore(owner, backup);
-                return ConversionDirection.None;
+                return false;
             }
 
-            if (!ClipboardHelper.SetText(owner, converted)) return ConversionDirection.None;
+            if (!ClipboardHelper.SetText(owner, converted)) return false;
             SendShortcut(Keys.V);
 
             if (settings.SwitchKeyboardLayout)
             {
-                KeyboardLayouts.SwitchForegroundWindow(
-                    direction == ConversionDirection.EnglishToThai ? KeyboardLayouts.LangThai : KeyboardLayouts.LangEnglish);
+                // เคอร์เซอร์อยู่ท้ายข้อความที่วาง จึงสลับเป็นภาษาของคำท้ายสุด ให้พิมพ์ต่อได้ทันที
+                switch (LayoutConverter.LanguageAtEnd(converted))
+                {
+                    case TextLanguage.Thai:
+                        KeyboardLayouts.SwitchForegroundWindow(KeyboardLayouts.LangThai);
+                        break;
+                    case TextLanguage.English:
+                        KeyboardLayouts.SwitchForegroundWindow(KeyboardLayouts.LangEnglish);
+                        break;
+                }
             }
 
             if (settings.RestoreClipboard)
@@ -57,7 +65,7 @@ namespace GaeKai
                 await Task.Delay(PasteSettleMs);
                 ClipboardHelper.Restore(owner, backup);
             }
-            return direction;
+            return true;
         }
 
         private static async Task WaitForKeysReleasedAsync(Hotkey hotkey)
@@ -147,9 +155,19 @@ namespace GaeKai
         public static void SwitchForegroundWindow(int primaryLanguage)
         {
             IntPtr layout = Find(primaryLanguage);
-            IntPtr window = NativeMethods.GetForegroundWindow();
-            if (layout == IntPtr.Zero || window == IntPtr.Zero) return;
-            NativeMethods.PostMessage(window, NativeMethods.WM_INPUTLANGCHANGEREQUEST, IntPtr.Zero, layout);
+            if (layout == IntPtr.Zero) return;
+
+            // ส่งไปที่ช่องที่กำลังพิมพ์อยู่ด้วย ไม่ใช่แค่หน้าต่างหลัก เพราะบางโปรแกรม (เช่นแอปแบบ UWP)
+            // ช่องพิมพ์อยู่คนละ thread กับกรอบหน้าต่าง ส่งไปที่กรอบอย่างเดียวจะไม่เปลี่ยนภาษา
+            IntPtr foreground = NativeMethods.GetForegroundWindow();
+            NativeMethods.GUITHREADINFO info = new NativeMethods.GUITHREADINFO();
+            info.cbSize = Marshal.SizeOf(typeof(NativeMethods.GUITHREADINFO));
+            IntPtr focus = NativeMethods.GetGUIThreadInfo(0, ref info) ? info.hwndFocus : IntPtr.Zero;
+
+            if (focus != IntPtr.Zero)
+                NativeMethods.PostMessage(focus, NativeMethods.WM_INPUTLANGCHANGEREQUEST, IntPtr.Zero, layout);
+            if (foreground != IntPtr.Zero && foreground != focus)
+                NativeMethods.PostMessage(foreground, NativeMethods.WM_INPUTLANGCHANGEREQUEST, IntPtr.Zero, layout);
         }
 
         private static IntPtr Find(int primaryLanguage)

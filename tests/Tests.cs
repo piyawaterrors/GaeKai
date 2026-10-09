@@ -13,30 +13,66 @@ namespace GaeKai.Tests
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
             // ---- แปลงอังกฤษ → ไทย ----
-            ExpectConvert("l;ylfu;yoouh;yo0yomiN", "สวัสดีวันนี้วันจันทร์", ConversionDirection.EnglishToThai);
-            ExpectConvert("8iy[", "ครับ", ConversionDirection.EnglishToThai);
-            ExpectConvert("-v[86I", "ขอบคุณ", ConversionDirection.EnglishToThai);
-            ExpectConvert("123", "ๅ/-", ConversionDirection.EnglishToThai);
-            ExpectConvert("wmp\r\nl;ylfu", "ไทย\r\nสวัสดี", ConversionDirection.EnglishToThai);
+            ExpectFix("l;ylfu;yoouh;yo0yomiN", "สวัสดีวันนี้วันจันทร์");
+            ExpectFix("8iy[", "ครับ");
+            ExpectFix("-v[86I", "ขอบคุณ");
+            ExpectFix("123", "ๅ/-");
+            ExpectFix("wmp\r\nl;ylfu", "ไทย\r\nสวัสดี");
 
             // ---- แปลงไทย → อังกฤษ ----
-            ExpectConvert("เนนก", "good", ConversionDirection.ThaiToEnglish);
-            ExpectConvert("เนนก ทนพืรืเ", "good morning", ConversionDirection.ThaiToEnglish);
-            ExpectConvert("้ำสสน ไนพสก", "hello world", ConversionDirection.ThaiToEnglish);
-            ExpectConvert("ๅ/-", "123", ConversionDirection.ThaiToEnglish);
-            ExpectConvert("ฉันชอบ", "Cyo=v[", ConversionDirection.ThaiToEnglish);
+            ExpectFix("เนนก", "good");
+            ExpectFix("เนนก ทนพืรืเ", "good morning");
+            ExpectFix("้ำสสน ไนพสก", "hello world");
+            ExpectFix("ๅ/-", "123");
+            ExpectFix("ฉันชอบ", "Cyo=v[");
+
+            // ---- ผิดสลับกันในข้อความเดียว: แปลงแต่ละช่วงไปคนละทาง ----
+            ExpectFix("py',u ฺีเ vp^j =j;p9i;0lv[.shsojvp", "ยังมี Bug อยู่ ช่วยตรวจสอบให้หน่อย");
+            ExpectFix("ฺีเvp^j", "Bugอยู่");
+            ExpectFix("l;ylfu ้ำสสน", "สวัสดี hello");
+
+            // ---- คลุมเกินมาถึงส่วนที่พิมพ์ถูกแล้ว: ส่วนที่ถูกอยู่แล้วไม่ถูกแปลง ----
+            ExpectFix("l;ylfu;yoouh ครับ", "สวัสดีวันนี้ ครับ");
+            ExpectFix("Hello l;ylfu", "Hello สวัสดี");
+            ExpectFix("สวัสดีครับ ้ำสสน", "สวัสดีครับ hello");
 
             // ---- ไม่มีอะไรต้องแปลง ----
-            ExpectConvert("", "", ConversionDirection.None);
-            ExpectConvert("   \r\n\t", "   \r\n\t", ConversionDirection.None);
+            ExpectFix("", "");
+            ExpectFix("   \r\n\t", "   \r\n\t");
+
+            // ---- ตรวจรูปแบบภาษา ----
+            foreach (string word in new[] { "สวัสดี", "ครับ", "ค่ะ", "น้ำ", "ข้าว", "เกาะ", "จ๊ะ", "เก็บ", "สิทธิ์", "ฤๅษี",
+                                            "ไม่", "ใช่", "เป็น", "กิ่ง", "แล้ว", "ทั้งนี้", "เดี๋ยว", "เกี๊ยะ", "อำนาจ", "ทํา",
+                                            "จันทร์", "ดีๆ", "ฯลฯ", "พ.ศ.", "๑๒๓", "คน" })
+            {
+                Expect(LayoutConverter.IsPlausibleThai(word), "plausible Thai: " + word);
+            }
+            foreach (string garbage in new[] { "ฺีเ", "้ำสสน", "ทนพืรืเ", "ๅ/-", "ะำหะ", "บสรืาล" })
+            {
+                Expect(!LayoutConverter.IsPlausibleThai(garbage), "implausible Thai: " + garbage);
+            }
+            foreach (string word in new[] { "Bug", "hello", "don't", "it's", "students'", "e.g.", "3rd", "C++", "v1.0", "a/b",
+                                            "well-known", "user@example.com", "(note)", "Hello," })
+            {
+                Expect(LayoutConverter.IsPlausibleEnglish(word), "plausible English: " + word);
+            }
+            foreach (string garbage in new[] { "l;ylfu", "py',u", "vp^j", "8iy[", ".sh", "w,j", "8o", "py'", "=j;p9i" })
+            {
+                Expect(!LayoutConverter.IsPlausibleEnglish(garbage), "implausible English: " + garbage);
+            }
+
+            // ---- ภาษาท้ายข้อความ (ใช้เลือกแป้นพิมพ์หลังแปลง) ----
+            Expect(LayoutConverter.LanguageAtEnd("ยังมี Bug อยู่") == TextLanguage.Thai, "language at end: Thai");
+            Expect(LayoutConverter.LanguageAtEnd("อยู่ Bug!") == TextLanguage.English, "language at end: English");
+            Expect(LayoutConverter.LanguageAtEnd("123 ...") == TextLanguage.None, "language at end: none");
 
             // ---- ตารางแป้นต้องจับคู่กันครบ 1:1 และแปลงไป-กลับแล้วได้ค่าเดิม ----
             Expect(LayoutConverter.KeyCount == 94, "keyboard table has 94 entries");
             string ascii = "";
             for (char c = '!'; c <= '~'; c++) ascii += c;
             string thai = LayoutConverter.Convert(ascii, ConversionDirection.EnglishToThai);
-            Expect(LayoutConverter.DetectDirection(thai) == ConversionDirection.ThaiToEnglish, "detects Thai side of full table");
             Expect(LayoutConverter.Convert(thai, ConversionDirection.ThaiToEnglish) == ascii, "round trip of every printable ASCII char");
+            Expect(LayoutConverter.Fix(thai) == ascii && LayoutConverter.Fix(ascii) == thai, "Fix flips the full table both ways");
             Expect(LayoutConverter.Convert("The quick brown fox!", ConversionDirection.EnglishToThai) != "The quick brown fox!",
                 "English sentence changes");
 
@@ -63,13 +99,11 @@ namespace GaeKai.Tests
             return failed == 0 ? 0 : 1;
         }
 
-        private static void ExpectConvert(string input, string expected, ConversionDirection expectedDirection)
+        private static void ExpectFix(string input, string expected)
         {
-            ConversionDirection direction;
-            string actual = LayoutConverter.Convert(input, out direction);
-            Expect(actual == expected && direction == expectedDirection,
-                string.Format("convert \"{0}\" -> \"{1}\" ({2}), got \"{3}\" ({4})",
-                    Escape(input), Escape(expected), expectedDirection, Escape(actual), direction));
+            string actual = LayoutConverter.Fix(input);
+            Expect(actual == expected,
+                string.Format("fix \"{0}\" -> \"{1}\", got \"{2}\"", Escape(input), Escape(expected), Escape(actual)));
         }
 
         private static void ExpectHotkey(string text, string expected)

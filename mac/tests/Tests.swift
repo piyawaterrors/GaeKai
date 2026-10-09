@@ -8,31 +8,62 @@ enum Tests {
 
     static func main() {
         // ---- แปลงอังกฤษ → ไทย ----
-        expectConvert("l;ylfu;yoouh;yo0yomiN", "สวัสดีวันนี้วันจันทร์", .englishToThai)
-        expectConvert("8iy[", "ครับ", .englishToThai)
-        expectConvert("-v[86I", "ขอบคุณ", .englishToThai)
-        expectConvert("123", "ๅ/_", .englishToThai) // แป้นเกษมณีของ macOS: ปุ่ม 3 ได้ "_"
-        expectConvert("wmp\r\nl;ylfu", "ไทย\r\nสวัสดี", .englishToThai)
+        expectFix("l;ylfu;yoouh;yo0yomiN", "สวัสดีวันนี้วันจันทร์")
+        expectFix("8iy[", "ครับ")
+        expectFix("-v[86I", "ขอบคุณ")
+        expectFix("123", "ๅ/_") // แป้นเกษมณีของ macOS: ปุ่ม 3 ได้ "_"
+        expectFix("wmp\r\nl;ylfu", "ไทย\r\nสวัสดี")
 
         // ---- แปลงไทย → อังกฤษ ----
-        expectConvert("เนนก", "good", .thaiToEnglish)
-        expectConvert("เนนก ทนพืรืเ", "good morning", .thaiToEnglish)
-        expectConvert("้ำสสน ไนพสก", "hello world", .thaiToEnglish)
-        expectConvert("ๅ/_", "123", .thaiToEnglish)
-        expectConvert("ฉันชอบ", "Cyo=v[", .thaiToEnglish)
-        expectConvert("กิ่ง", "dbj'", .thaiToEnglish) // สระ/วรรณยุกต์ต้องแปลงแยกตัว ไม่ใช่ทั้งกลุ่ม
+        expectFix("เนนก", "good")
+        expectFix("เนนก ทนพืรืเ", "good morning")
+        expectFix("้ำสสน ไนพสก", "hello world")
+        expectFix("ๅ/_", "123")
+        expectFix("ฉันชอบ", "Cyo=v[")
+        expectFix("กิ่ง", "dbj'") // สระ/วรรณยุกต์ต้องแปลงแยกตัว ไม่ใช่ทั้งกลุ่ม
+
+        // ---- ผิดสลับกันในข้อความเดียว: แปลงแต่ละช่วงไปคนละทาง ----
+        expectFix("py',u ฺีเ vp^j =j;p9i;0lv[.shsojvp", "ยังมี Bug อยู่ ช่วยตรวจสอบให้หน่อย")
+        expectFix("ฺีเvp^j", "Bugอยู่")
+        expectFix("l;ylfu ้ำสสน", "สวัสดี hello")
+
+        // ---- คลุมเกินมาถึงส่วนที่พิมพ์ถูกแล้ว: ส่วนที่ถูกอยู่แล้วไม่ถูกแปลง ----
+        expectFix("l;ylfu;yoouh ครับ", "สวัสดีวันนี้ ครับ")
+        expectFix("Hello l;ylfu", "Hello สวัสดี")
+        expectFix("สวัสดีครับ ้ำสสน", "สวัสดีครับ hello")
 
         // ---- ไม่มีอะไรต้องแปลง ----
-        expectConvert("", "", .none)
-        expectConvert("   \r\n\t", "   \r\n\t", .none)
+        expectFix("", "")
+        expectFix("   \r\n\t", "   \r\n\t")
+
+        // ---- ตรวจรูปแบบภาษา ----
+        for word in ["สวัสดี", "ครับ", "ค่ะ", "น้ำ", "ข้าว", "เกาะ", "จ๊ะ", "เก็บ", "สิทธิ์", "ฤๅษี", "ไม่", "ใช่", "เป็น",
+                     "กิ่ง", "แล้ว", "ทั้งนี้", "เดี๋ยว", "เกี๊ยะ", "อำนาจ", "ทํา", "จันทร์", "ดีๆ", "ฯลฯ", "พ.ศ.", "๑๒๓", "คน"] {
+            expect(LayoutConverter.isPlausibleThai(word), "plausible Thai: " + word)
+        }
+        for garbage in ["ฺีเ", "้ำสสน", "ทนพืรืเ", "ๅ/-", "ะำหะ", "บสรืาล"] {
+            expect(!LayoutConverter.isPlausibleThai(garbage), "implausible Thai: " + garbage)
+        }
+        for word in ["Bug", "hello", "don't", "it's", "students'", "e.g.", "3rd", "C++", "v1.0", "a/b",
+                     "well-known", "user@example.com", "(note)", "Hello,"] {
+            expect(LayoutConverter.isPlausibleEnglish(word), "plausible English: " + word)
+        }
+        for garbage in ["l;ylfu", "py',u", "vp^j", "8iy[", ".sh", "w,j", "8o", "py'", "=j;p9i"] {
+            expect(!LayoutConverter.isPlausibleEnglish(garbage), "implausible English: " + garbage)
+        }
+
+        // ---- ภาษาท้ายข้อความ (ใช้เลือกแป้นพิมพ์หลังแปลง) ----
+        expect(LayoutConverter.languageAtEnd("ยังมี Bug อยู่") == .thai, "language at end: Thai")
+        expect(LayoutConverter.languageAtEnd("อยู่ Bug!") == .english, "language at end: English")
+        expect(LayoutConverter.languageAtEnd("123 ...") == TextLanguage.none, "language at end: none")
 
         // ---- ตารางแป้นต้องจับคู่กันครบ 1:1 และแปลงไป-กลับแล้วได้ค่าเดิม ----
         let standard = LayoutConverter.standard
         expect(standard.keyCount == 94, "keyboard table has 94 entries")
         let ascii = String(String.UnicodeScalarView((33...126).compactMap(Unicode.Scalar.init)))
         let thai = standard.convert(ascii, .englishToThai)
-        expect(standard.detectDirection(thai) == .thaiToEnglish, "detects Thai side of full table")
         expect(standard.convert(thai, .thaiToEnglish) == ascii, "round trip of every printable ASCII char")
+        expect(standard.fix(thai) == ascii && standard.fix(ascii) == thai, "fix flips the full table both ways")
         expect(standard.convert("The quick brown fox!", .englishToThai) != "The quick brown fox!", "English sentence changes")
 
         // ---- ตารางที่อ่านจากแป้นของ macOS เอง ต้องตรงกับตารางในโค้ด ----
@@ -87,11 +118,9 @@ enum Tests {
         exit(failed == 0 ? 0 : 1)
     }
 
-    static func expectConvert(_ input: String, _ expected: String, _ expectedDirection: ConversionDirection) {
-        let (actual, direction) = LayoutConverter.standard.convert(input)
-        expect(actual == expected && direction == expectedDirection,
-               "convert \"\(escape(input))\" -> \"\(escape(expected))\" (\(expectedDirection)), " +
-               "got \"\(escape(actual))\" (\(direction))")
+    static func expectFix(_ input: String, _ expected: String) {
+        let actual = LayoutConverter.standard.fix(input)
+        expect(actual == expected, "fix \"\(escape(input))\" -> \"\(escape(expected))\", got \"\(escape(actual))\"")
     }
 
     static func expectHotkey(_ text: String, _ expected: String?) {
